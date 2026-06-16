@@ -1,0 +1,53 @@
+# ──────────────────────────────────────────────
+# DoConnect AI — Chat Service .gitignore
+# ──────────────────────────────────────────────
+
+# ── Maven build output ──────────────────────────
+target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# ── Java artifacts ──────────────────────────────
+*.class
+*.jar
+*.war
+*.ear
+
+# ── Environment / secrets ───────────────────────
+.env
+.env.*
+!.env.example
+*.env
+!*.env.example
+application-local.properties
+application-prod.properties
+application-staging.properties
+
+# ── IntelliJ IDEA ───────────────────────────────
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# ── Eclipse / STS ───────────────────────────────
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+
+# ── VS Code ─────────────────────────────────────
+.vscode/
+!.vscode/extensions.json
+
+# ── macOS ────────────────────────────────────────
+.DS_Store
+
+# ── Windows ──────────────────────────────────────
+Thumbs.db
+
+# ── Logs ─────────────────────────────────────────
+logs/
+*.log
