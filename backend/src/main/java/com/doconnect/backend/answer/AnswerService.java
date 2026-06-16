@@ -7,9 +7,12 @@ import com.doconnect.backend.question.QuestionService;
 import com.doconnect.backend.question.QuestionStatus;
 import com.doconnect.backend.user.User;
 import java.util.List;
+import org.springframework.security.access.AccessDeniedException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 public class AnswerService {
 
@@ -51,6 +54,7 @@ public class AnswerService {
 		answer.setAuthor(author);
 		question.setStatus(QuestionStatus.ANSWERED);
 		Answer saved = answerRepository.save(answer);
+		log.info("Answer created. answerId={}, questionId={}, userId={}", saved.getId(), questionId, author.getId());
 		notificationService.notifyQuestionAnswered(question, saved);
 		return AnswerResponse.from(saved);
 	}
@@ -58,16 +62,29 @@ public class AnswerService {
 	@Transactional
 	public AnswerResponse update(Long id, AnswerRequest request, User currentUser) {
 		Answer answer = findAnswer(id);
-		QuestionService.requireOwnerOrAdmin(answer.getAuthor(), currentUser, "Only the answer owner or ADMIN can edit this answer");
+		try {
+			QuestionService.requireOwnerOrAdmin(answer.getAuthor(), currentUser, "Only the answer owner or ADMIN can edit this answer");
+		} catch (AccessDeniedException e) {
+			log.warn("Unauthorized answer modification attempt. answerId={}, userId={}", id, currentUser.getId());
+			throw e;
+		}
 		answer.setBody(request.body().trim());
-		return AnswerResponse.from(answerRepository.save(answer));
+		Answer savedAnswer = answerRepository.save(answer);
+		log.info("Answer updated. answerId={}, userId={}", savedAnswer.getId(), currentUser.getId());
+		return AnswerResponse.from(savedAnswer);
 	}
 
 	@Transactional
 	public void delete(Long id, User currentUser) {
 		Answer answer = findAnswer(id);
-		QuestionService.requireOwnerOrAdmin(answer.getAuthor(), currentUser, "Only the answer owner or ADMIN can delete this answer");
+		try {
+			QuestionService.requireOwnerOrAdmin(answer.getAuthor(), currentUser, "Only the answer owner or ADMIN can delete this answer");
+		} catch (AccessDeniedException e) {
+			log.warn("Unauthorized answer modification attempt. answerId={}, userId={}", id, currentUser.getId());
+			throw e;
+		}
 		answerRepository.delete(answer);
+		log.info("Answer deleted. answerId={}, userId={}", id, currentUser.getId());
 	}
 
 	private Answer findAnswer(Long id) {

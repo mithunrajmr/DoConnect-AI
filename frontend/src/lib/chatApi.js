@@ -1,7 +1,7 @@
 /**
  * Chat service API helpers.
  *
- * REST base: /chat (Vite proxies /chat → http://localhost:8090, stripping the prefix)
+ * REST base: /api/chat (Vite proxies /api/chat → http://localhost:8090, stripping the prefix)
  * WebSocket:  ws://localhost:8090/ws  (direct — raw STOMP, no SockJS)
  *
  * Auth: the same JWT token stored under 'doconnect_token' is used for both
@@ -18,9 +18,9 @@ import axios from 'axios'
 const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
 const CHAT_WS_URL = `${wsProtocol}//${window.location.host}/ws-chat`
 
-/** Vite proxies /chat → http://localhost:8090 (with prefix stripped). */
-const chatHttp = axios.create({
-  baseURL: '/chat',
+/** Vite proxies /chat-api → http://localhost:8090/api/chat */
+export const chatHttp = axios.create({
+  baseURL: import.meta.env.VITE_CHAT_API_URL || '/chat-api',
   headers: { 'Content-Type': 'application/json' },
 })
 
@@ -35,10 +35,10 @@ chatHttp.interceptors.request.use((config) => {
 /**
  * Fetch chat message history.
  * GET /api/chat/messages?limit=<n>
- * Returns ChatMessageResponse[] sorted oldest-first.
+ * Returns ChatMessageResponse[] * GET /messages?limit=<n>
  */
 export async function fetchChatHistory(limit = 50) {
-  const { data } = await chatHttp.get('/api/chat/messages', { params: { limit } })
+  const { data } = await chatHttp.get('/messages', { params: { limit } })
   return data
 }
 

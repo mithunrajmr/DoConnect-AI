@@ -14,6 +14,9 @@ All endpoints (unless marked otherwise) require an `Authorization: Bearer <token
     *   **Returns:** `200 OK` with JWT.
 *   `GET /me`
     *   **Returns:** `200 OK` User profile details.
+*   `PUT /profile`
+    *   **Body:** `{"name": "...", "avatarUrl": "..."}` (fields from UpdateProfileRequest)
+    *   **Returns:** `200 OK` Updated user profile details.
 
 ## 2. Questions (`/api/questions`)
 
@@ -74,6 +77,14 @@ All endpoints (unless marked otherwise) require an `Authorization: Bearer <token
 *   `POST /moderation/check`
     *   **Body:** `{"content": "..."}`
     *   **Returns:** `200 OK` `{"toxic": false, "spam": false, "score": 0.1}`
+*   `POST /recommendations/predict-tags`
+    *   **Body:** `{"title": "...", "description": "..."}`
+    *   **Returns:** `200 OK` `{"tags": ["tag1", "tag2"]}`
+*   `GET /recommendations/similar/{questionId}`
+    *   **Returns:** `200 OK` List of similar questions.
+*   `POST /recommendations/search`
+    *   **Body:** `{"query": "..."}`
+    *   **Returns:** `200 OK` List of relevant questions based on semantic search.
 
 ## 7. Internal Service Endpoints
 

@@ -7,9 +7,11 @@ import com.doconnect.backend.user.User;
 import com.doconnect.backend.user.UserRole;
 import java.util.List;
 import org.springframework.security.access.AccessDeniedException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 public class QuestionService {
 
@@ -43,24 +45,39 @@ public class QuestionService {
 		question.setBody(request.body().trim());
 		question.setAuthor(author);
 		question.setTags(tagService.resolveTags(request.tags()));
-		return QuestionResponse.from(questionRepository.save(question));
+		Question savedQuestion = questionRepository.save(question);
+		log.info("Question created. questionId={}, userId={}", savedQuestion.getId(), author.getId());
+		return QuestionResponse.from(savedQuestion);
 	}
 
 	@Transactional
 	public QuestionResponse update(Long id, QuestionRequest request, User currentUser) {
 		Question question = findQuestion(id);
-		requireOwnerOrAdmin(question.getAuthor(), currentUser, "Only the question owner or ADMIN can edit this question");
+		try {
+			requireOwnerOrAdmin(question.getAuthor(), currentUser, "Only the question owner or ADMIN can edit this question");
+		} catch (AccessDeniedException e) {
+			log.warn("Unauthorized question modification attempt. questionId={}, userId={}", id, currentUser.getId());
+			throw e;
+		}
 		question.setTitle(request.title().trim());
 		question.setBody(request.body().trim());
 		question.setTags(tagService.resolveTags(request.tags()));
-		return QuestionResponse.from(questionRepository.save(question));
+		Question savedQuestion = questionRepository.save(question);
+		log.info("Question updated. questionId={}, userId={}", savedQuestion.getId(), currentUser.getId());
+		return QuestionResponse.from(savedQuestion);
 	}
 
 	@Transactional
 	public void delete(Long id, User currentUser) {
 		Question question = findQuestion(id);
-		requireOwnerOrAdmin(question.getAuthor(), currentUser, "Only the question owner or ADMIN can delete this question");
+		try {
+			requireOwnerOrAdmin(question.getAuthor(), currentUser, "Only the question owner or ADMIN can delete this question");
+		} catch (AccessDeniedException e) {
+			log.warn("Unauthorized question modification attempt. questionId={}, userId={}", id, currentUser.getId());
+			throw e;
+		}
 		questionRepository.delete(question);
+		log.info("Question deleted. questionId={}, userId={}", id, currentUser.getId());
 	}
 
 	@Transactional
@@ -79,7 +96,12 @@ public class QuestionService {
 			throw new ResourceNotFoundException("Answer not found for question");
 		}
 
-		requireOwnerOrAdmin(question.getAuthor(), currentUser, "Only the question owner or ADMIN can accept an answer");
+		try {
+			requireOwnerOrAdmin(question.getAuthor(), currentUser, "Only the question owner or ADMIN can accept an answer");
+		} catch (AccessDeniedException e) {
+			log.warn("Unauthorized question modification attempt. questionId={}, userId={}", questionId, currentUser.getId());
+			throw e;
+		}
 
 		List<Answer> questionAnswers = answerRepository.findByQuestionId(questionId);
 		for (Answer candidate : questionAnswers) {
@@ -90,7 +112,12 @@ public class QuestionService {
 		question.setStatus(QuestionStatus.SOLVED);
 
 		answerRepository.saveAll(questionAnswers);
-		return QuestionResponse.from(questionRepository.save(question));
+		Question savedQuestion = questionRepository.save(question);
+		
+		log.info("Answer accepted. questionId={}, answerId={}, userId={}", savedQuestion.getId(), answerId, currentUser.getId());
+		log.info("Question status changed. questionId={}, status={}", savedQuestion.getId(), QuestionStatus.SOLVED);
+		
+		return QuestionResponse.from(savedQuestion);
 	}
 
 	public Question findQuestion(Long id) {

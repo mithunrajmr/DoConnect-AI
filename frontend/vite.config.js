@@ -13,11 +13,10 @@ export default defineConfig({
         changeOrigin: true,
       },
       // Chat microservice REST endpoints (port 8090)
-      // Vite strips /chat prefix before forwarding.
-      '/chat': {
+      '/chat-api': {
         target: 'http://localhost:8090',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/chat/, ''),
+        rewrite: (path) => path.replace(/^\/chat-api/, '/api/chat'),
       },
       // Chat microservice WebSocket — proxied so the browser Origin header
       // always matches the chat service's allowed-origins list regardless

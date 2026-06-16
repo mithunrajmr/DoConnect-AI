@@ -13,6 +13,7 @@ import ChatPage from './pages/ChatPage'
 import AnalyticsDashboardPage from './pages/AnalyticsDashboardPage'
 import AdminModerationPage from './pages/AdminModerationPage'
 import AdminRoute from './components/AdminRoute'
+import LandingPage from './pages/LandingPage'
 
 import { NotificationProvider } from './context/NotificationContext'
 
@@ -29,7 +30,7 @@ function AppLayout() {
     <>
       <NavBar />
       <Routes>
-        <Route index element={<FeedPage />} />
+        <Route path="/feed" element={<FeedPage />} />
         <Route path="questions/:id" element={<QuestionDetailPage />} />
         <Route path="ask" element={<AskPage />} />
         <Route path="profile" element={<ProfilePage />} />
@@ -52,6 +53,7 @@ export default function App() {
       <AuthProvider>
         <NotificationProvider>
           <Routes>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login"    element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route element={<ProtectedRoute />}>

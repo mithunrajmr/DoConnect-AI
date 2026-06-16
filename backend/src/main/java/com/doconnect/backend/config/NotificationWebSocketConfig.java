@@ -17,7 +17,7 @@ public class NotificationWebSocketConfig implements WebSocketMessageBrokerConfig
 	private final NotificationWebSocketAuthChannelInterceptor authChannelInterceptor;
 
 	public NotificationWebSocketConfig(
-			@Value("${app.notifications.allowed-origins:http://localhost:5173,http://127.0.0.1:5173}") String allowedOrigins,
+			@Value("${app.notifications.allowed-origins}") String allowedOrigins,
 			NotificationWebSocketAuthChannelInterceptor authChannelInterceptor
 	) {
 		this.allowedOrigins = Arrays.stream(allowedOrigins.split(","))

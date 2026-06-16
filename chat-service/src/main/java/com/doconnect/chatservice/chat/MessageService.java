@@ -5,6 +5,8 @@ import java.util.Comparator;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class MessageService {
+
+	private static final Logger log = LoggerFactory.getLogger(MessageService.class);
 
 	private final ChatMessageFactory messageFactory;
 	private final MessageModerationStrategy moderationStrategy;
@@ -42,13 +46,20 @@ public class MessageService {
 		validate(request);
 		ModerationDecision moderationDecision = moderationStrategy.evaluate(request, sender);
 		ChatMessage message = messageFactory.createGlobalMessage(request, sender, moderationDecision);
-		return ChatMessageResponse.from(messageRepository.save(message));
+		try {
+			ChatMessage savedMessage = messageRepository.save(message);
+			log.info("Chat message persisted. messageId={}, senderId={}, roomId={}", savedMessage.getId(), sender.userId(), globalRoomId);
+			return ChatMessageResponse.from(savedMessage);
+		} catch (Exception e) {
+			log.error("Chat persistence failures. error={}, senderId={}", e.getMessage(), sender.userId());
+			throw e;
+		}
 	}
 
 	@Transactional(readOnly = true)
 	public List<ChatMessageResponse> getGlobalHistory(Integer requestedLimit) {
 		int limit = normalizeLimit(requestedLimit);
-		return messageRepository.findByRoomTypeAndRoomIdOrderByCreatedAtDesc(
+		List<ChatMessageResponse> history = messageRepository.findByRoomTypeAndRoomIdOrderByCreatedAtDesc(
 						RoomType.GLOBAL,
 						globalRoomId,
 						PageRequest.of(0, limit)
@@ -57,6 +68,8 @@ public class MessageService {
 				.sorted(Comparator.comparing(ChatMessage::getCreatedAt))
 				.map(ChatMessageResponse::from)
 				.toList();
+		log.info("Chat history loaded. roomId={}, messageCount={}", globalRoomId, history.size());
+		return history;
 	}
 
 	private void validate(ChatMessageRequest request) {

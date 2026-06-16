@@ -12,9 +12,17 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestControllerAdvice
 public class ApiExceptionHandler {
+
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<ApiError> handleException(Exception ex) {
+		log.error("Unhandled exceptions", ex);
+		return error(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", List.of());
+	}
 
 	@ExceptionHandler(DuplicateEmailException.class)
 	public ResponseEntity<ApiError> handleDuplicateEmail(DuplicateEmailException ex) {

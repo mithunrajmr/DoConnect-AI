@@ -175,7 +175,7 @@ export default function ChatPage() {
   const charsLeft = 1000 - draft.length
 
   return (
-    <div className="page-container" style={{ maxWidth: 760, display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 56px)' }}>
+    <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 56px)', padding: '1rem' }}>
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexShrink: 0 }}>

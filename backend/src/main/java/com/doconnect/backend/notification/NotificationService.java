@@ -7,9 +7,11 @@ import com.doconnect.backend.user.User;
 import com.doconnect.backend.user.UserRepository;
 import java.util.List;
 import org.springframework.security.access.AccessDeniedException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 public class NotificationService {
 
@@ -48,6 +50,7 @@ public class NotificationService {
 		if (!notification.isRead()) {
 			notification.setRead(true);
 			notification = notificationRepository.save(notification);
+			log.info("Notification marked as read. notificationId={}, userId={}", notification.getId(), currentUser.getId());
 			realtimeService.unreadCountChanged(currentUser.getEmail(), notificationRepository.countByRecipientIdAndReadFalse(currentUser.getId()));
 		}
 		return NotificationResponse.from(notification);
@@ -56,6 +59,7 @@ public class NotificationService {
 	@Transactional
 	public UnreadCountResponse markAllRead(User currentUser) {
 		notificationRepository.markAllAsReadByRecipientId(currentUser.getId());
+		log.info("Notification marked as read. count=ALL, userId={}", currentUser.getId());
 		realtimeService.unreadCountChanged(currentUser.getEmail(), 0L);
 		return new UnreadCountResponse(0L);
 	}
@@ -79,6 +83,7 @@ public class NotificationService {
 		notification.setOccurrenceCount(1);
 
 		Notification saved = notificationRepository.save(notification);
+		log.info("Notification created. notificationId={}, recipientId={}, type={}", saved.getId(), recipient.getId(), saved.getType());
 		push(saved);
 	}
 
@@ -109,6 +114,9 @@ public class NotificationService {
 			notification.setMessage(event.senderName() + ": " + truncate(event.content(), 120));
 
 			Notification saved = notificationRepository.save(notification);
+			if (isNew) {
+				log.info("Notification created. notificationId={}, recipientId={}, type={}", saved.getId(), recipient.getId(), saved.getType());
+			}
 			push(saved);
 		}
 	}

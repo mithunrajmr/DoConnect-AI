@@ -9,9 +9,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Locale;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 public class AiModerationService {
 
@@ -77,7 +79,14 @@ public class AiModerationService {
 				Content:
 				%s
 				""".formatted(detailed ? "specific and explanatory" : "brief and concise", content.trim());
-		return parseModerationResponse(geminiClient.generateText(prompt));
+		ModerationResponse result = parseModerationResponse(geminiClient.generateText(prompt));
+		if (result.toxic() || result.spam()) {
+			log.warn("Toxic or spam content detected. toxic={}, spam={}, score={}", result.toxic(), result.spam(), result.score());
+			log.info("Content flagged. reason={}", result.reason());
+		} else {
+			log.info("Content approved. score={}", result.score());
+		}
+		return result;
 	}
 
 	private ModerationResponse parseModerationResponse(String response) {

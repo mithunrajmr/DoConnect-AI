@@ -36,8 +36,11 @@ public class NotificationClient {
 					.body(ChatNotificationEvent.from(response))
 					.retrieve()
 					.toBodilessEntity();
+			log.info("Notification sent successfully to backend. messageId={}", response.getId());
+		} catch (org.springframework.web.client.RestClientResponseException ex) {
+			log.warn("Unexpected response from backend. messageId={}, error={}", response.getId(), ex.getMessage());
 		} catch (Exception ex) {
-			log.warn("Unable to forward chat notification event for message {}: {}", response.getId(), ex.getMessage());
+			log.error("Inter-service communication failures. messageId={}, error={}", response.getId(), ex.getMessage());
 		}
 	}
 }

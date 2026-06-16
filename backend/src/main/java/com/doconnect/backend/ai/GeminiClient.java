@@ -11,11 +11,13 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
  * Reusable Gemini REST client for current and future AI modules.
  */
+@Slf4j
 @Service
 public class GeminiClient {
 
@@ -31,6 +33,8 @@ public class GeminiClient {
 
 	public String generateText(String prompt) {
 		requireConfiguredApiKey();
+		long startTime = System.currentTimeMillis();
+		log.info("AI request started. modelPath={}", properties.modelPath());
 		try {
 			HttpRequest request = HttpRequest.newBuilder()
 					.uri(generateContentUri())
@@ -40,13 +44,19 @@ public class GeminiClient {
 					.build();
 
 			HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+			long durationMs = System.currentTimeMillis() - startTime;
 			if (response.statusCode() < 200 || response.statusCode() >= 300) {
+				log.error("Gemini API failures. statusCode={}, durationMs={}", response.statusCode(), durationMs);
 				throw new GeminiException("Gemini API request failed with status " + response.statusCode(), response.statusCode());
 			}
+			log.info("AI request completed. statusCode={}", response.statusCode());
+			log.info("Request duration. durationMs={}", durationMs);
 			return extractText(response.body());
 		} catch (GeminiException ex) {
 			throw ex;
 		} catch (Exception ex) {
+			long durationMs = System.currentTimeMillis() - startTime;
+			log.error("Gemini API failures. error={}, durationMs={}", ex.getMessage(), durationMs);
 			throw new GeminiException("Unable to call Gemini API: " + ex.getMessage(), ex);
 		}
 	}

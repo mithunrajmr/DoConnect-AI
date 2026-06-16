@@ -9,8 +9,10 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class AuthService {
 
@@ -45,6 +47,8 @@ public class AuthService {
 		user.setRole(UserRole.USER);
 		User savedUser = userRepository.save(user);
 
+		log.info("User registered successfully. userId={}, email={}", savedUser.getId(), savedUser.getEmail());
+
 		return new AuthResponse(jwtService.generateToken(savedUser), UserResponse.from(savedUser));
 	}
 
@@ -55,11 +59,17 @@ public class AuthService {
 					new UsernamePasswordAuthenticationToken(email, request.password())
 			);
 		} catch (AuthenticationException ex) {
+			log.warn("Invalid login attempt. email={}", email);
 			throw new BadCredentialsException("Invalid email or password");
 		}
 
 		User user = userRepository.findByEmail(email)
-				.orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
+				.orElseThrow(() -> {
+					log.warn("Invalid login attempt. email={}", email);
+					return new BadCredentialsException("Invalid email or password");
+				});
+		
+		log.info("User logged in successfully. userId={}, email={}", user.getId(), user.getEmail());
 		return new AuthResponse(jwtService.generateToken(user), UserResponse.from(user));
 	}
 
@@ -69,6 +79,8 @@ public class AuthService {
 		if (request.password() != null && !request.password().isBlank()) {
 			currentUser.setPasswordHash(passwordEncoder.encode(request.password()));
 		}
-		return UserResponse.from(userRepository.save(currentUser));
+		User savedUser = userRepository.save(currentUser);
+		log.info("User profile updated. userId={}", savedUser.getId());
+		return UserResponse.from(savedUser);
 	}
 }
