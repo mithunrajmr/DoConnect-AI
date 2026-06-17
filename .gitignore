@@ -91,3 +91,10 @@ logs/
 *.njsproj
 *.sln
 *.sw?
+
+# ── Document Generation / Temporary Files ────────
+~$*.docx
+~$*.pptx
+docs/node_modules/
+docs/package.json
+docs/package-lock.json
